@@ -1,0 +1,8 @@
+language: rust
+chapters:
+  - 01:
+    number: 1
+    name: basics
+  - 02:
+    number: 2
+    name: loops
