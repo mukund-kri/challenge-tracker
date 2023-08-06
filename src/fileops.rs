@@ -1,6 +1,11 @@
 /// All filesystem related operations go here.
 use std::collections::HashSet;
 
+/// The directory that are not chapters like .git, .github, etc.
+fn is_not_chapter(dir_name: &str) -> bool {
+    !dir_name.starts_with('.')
+}
+
 pub fn list_directories(path: &str) -> HashSet<String> {
     let mut dirs = HashSet::new();
     for entry in std::fs::read_dir(path).unwrap() {
@@ -8,7 +13,11 @@ pub fn list_directories(path: &str) -> HashSet<String> {
         let path = entry.path();
         if path.is_dir() {
             let dir_name = path.file_name().unwrap().to_str().unwrap().to_string();
-            dirs.insert(dir_name);
+
+            // remove dot folders. they are typically hidden folders
+            if is_not_chapter(&dir_name) {
+                dirs.insert(dir_name);
+            }
         }
     }
     dirs
