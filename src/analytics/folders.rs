@@ -1,22 +1,34 @@
 use std::collections::HashSet;
 
-extern crate termion;
-use termion::{color, style};
-
 use crate::config::{Config, ReportType};
 use crate::fileops::list_directories;
-use crate::orgmode::todo_do_chapter;
+use crate::reports::cli::folder_status_report;
+use crate::reports::orgmode::todo_do_chapter;
 
+/// Entry point for the folders analytics. I matches the folders in the project with the
+/// chapters in the config file and reports out the missing and extra folders.
+///
+/// There are two report types: `cli` and `org` ...
+///
+/// 1 :: The `cli` report type is the default and prints out the missing and extra folders to the
+/// console.
+///
+/// 2 :: The `org` report type prints out the missing folders in the org-mode format as TODOs.
+///
+/// # Arguments
+///
+/// * `config` - The Config struct.
 pub fn run(config: &Config) {
     let (missing_dirs, extra_dirs) = analyze(config);
 
     if config.report_type == ReportType::OrgMode {
         todo_do_chapter(&missing_dirs, config).unwrap();
     } else {
-        report(missing_dirs, extra_dirs);
+        folder_status_report(missing_dirs, extra_dirs);
     }
 }
 
+/// Compute the missing and extra folders.
 fn analyze(config: &Config) -> (HashSet<String>, HashSet<String>) {
     let existing_dirs = list_directories(config.root_dir.as_str());
 
@@ -32,57 +44,6 @@ fn analyze(config: &Config) -> (HashSet<String>, HashSet<String>) {
         .collect::<HashSet<_>>();
 
     (missing_dirs, extra_dirs)
-}
-
-fn report(missing_dirs: HashSet<String>, extra_dirs: HashSet<String>) {
-    if missing_dirs.is_empty() && extra_dirs.is_empty() {
-        println!(
-            "{}{}All good!{}",
-            color::Fg(color::Green),
-            style::Bold,
-            style::Reset
-        );
-    } else {
-        if !missing_dirs.is_empty() {
-            let no_missing_dirs = missing_dirs.len();
-
-            println!(
-                "\n{}{}Error: Found {} Missing directories{}",
-                color::Fg(color::Red),
-                style::Bold,
-                no_missing_dirs,
-                style::Reset
-            );
-
-            // List the missing directories
-            for missing_dir in &missing_dirs {
-                println!("{}", missing_dir);
-            }
-        }
-
-        if !extra_dirs.is_empty() {
-            let no_extra_dirs = extra_dirs.len();
-
-            println!(
-                "\n{}{}Found {} Extra directories{}",
-                color::Fg(color::Red),
-                style::Bold,
-                no_extra_dirs,
-                style::Reset
-            );
-
-            // List the extra directories
-            for extra_dir in extra_dirs {
-                println!(
-                    "{}{}{}{}",
-                    color::Fg(color::Red),
-                    style::Bold,
-                    extra_dir,
-                    style::Reset
-                );
-            }
-        }
-    }
 }
 
 // Tests

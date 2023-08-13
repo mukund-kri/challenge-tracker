@@ -6,6 +6,8 @@ fn is_not_chapter(dir_name: &str) -> bool {
     !dir_name.starts_with('.')
 }
 
+/// Simple utility to list all the directories in a given path. It ignores the dot directories
+/// which tend to be git related folders and not chapters.
 pub fn list_directories(path: &str) -> HashSet<String> {
     let mut dirs = HashSet::new();
     for entry in std::fs::read_dir(path).unwrap() {

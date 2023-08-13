@@ -16,6 +16,12 @@ static TODO_TEMPLATE: &str = r#"
 * TODO [{language}] {project} :: Learn {chapter}
 {body}"#;
 
+/// For each missing chapter, generate a TODO item in org-mode format.
+///
+/// # Arguments
+///
+/// * `missing_chapters` - (HashSet<String>) The list of missing chapters.
+/// * `config` - (Config) The Config struct for this app.
 pub fn todo_do_chapter(
     missing_chapters: &HashSet<String>,
     config: &Config,

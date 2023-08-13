@@ -4,4 +4,4 @@ extern crate tinytemplate;
 pub mod analytics;
 pub mod config;
 pub mod fileops;
-pub mod orgmode;
+pub mod reports;
