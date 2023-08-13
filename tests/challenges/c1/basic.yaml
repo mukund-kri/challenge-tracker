@@ -1,4 +1,5 @@
 language: rust
+project: Rust Language
 chapters:
   - 01:
     number: 1

@@ -3,12 +3,18 @@ use std::collections::HashSet;
 extern crate termion;
 use termion::{color, style};
 
-use crate::config::Config;
+use crate::config::{Config, ReportType};
 use crate::fileops::list_directories;
+use crate::orgmode::todo_do_chapter;
 
 pub fn run(config: &Config) {
     let (missing_dirs, extra_dirs) = analyze(config);
-    report(missing_dirs, extra_dirs);
+
+    if config.report_type == ReportType::OrgMode {
+        todo_do_chapter(&missing_dirs, config).unwrap();
+    } else {
+        report(missing_dirs, extra_dirs);
+    }
 }
 
 fn analyze(config: &Config) -> (HashSet<String>, HashSet<String>) {
@@ -25,9 +31,6 @@ fn analyze(config: &Config) -> (HashSet<String>, HashSet<String>) {
         .map(|s| s.to_string())
         .collect::<HashSet<_>>();
 
-    println!("Missing dirs: {:?}", missing_dirs);
-    println!("Extra dirs: {:?}", extra_dirs);
-
     (missing_dirs, extra_dirs)
 }
 
@@ -41,27 +44,49 @@ fn report(missing_dirs: HashSet<String>, extra_dirs: HashSet<String>) {
         );
     } else {
         if !missing_dirs.is_empty() {
+            let no_missing_dirs = missing_dirs.len();
+
             println!(
-                "{}{}Missing directories: {:?}{}",
+                "\n{}{}Error: Found {} Missing directories{}",
                 color::Fg(color::Red),
                 style::Bold,
-                missing_dirs,
+                no_missing_dirs,
                 style::Reset
             );
+
+            // List the missing directories
+            for missing_dir in &missing_dirs {
+                println!("{}", missing_dir);
+            }
         }
+
         if !extra_dirs.is_empty() {
+            let no_extra_dirs = extra_dirs.len();
+
             println!(
-                "{}{}Extra directories: {:?}{}",
+                "\n{}{}Found {} Extra directories{}",
                 color::Fg(color::Red),
                 style::Bold,
-                extra_dirs,
+                no_extra_dirs,
                 style::Reset
             );
+
+            // List the extra directories
+            for extra_dir in extra_dirs {
+                println!(
+                    "{}{}{}{}",
+                    color::Fg(color::Red),
+                    style::Bold,
+                    extra_dir,
+                    style::Reset
+                );
+            }
         }
     }
 }
 
 // Tests
+#[allow(unused_imports)]
 mod tests {
     use super::*;
 

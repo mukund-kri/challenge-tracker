@@ -1,7 +1,32 @@
+use std::collections::HashSet;
+
 use derivative::Derivative;
 use serde::Deserialize;
 /// All code related to reading the `challenges.yaml` congiguration file.
 use std::error::Error;
+
+/// Enum that controls the output of the analytics.
+#[derive(Debug, PartialEq)]
+pub enum ReportType {
+    /// Output the analytics in org-mode format.
+    OrgMode,
+    CLI,
+}
+
+impl Default for ReportType {
+    fn default() -> Self {
+        ReportType::CLI
+    }
+}
+
+impl ReportType {
+    pub fn new(type_str: &str) -> Self {
+        match type_str {
+            "org" => ReportType::OrgMode,
+            _ => ReportType::CLI,
+        }
+    }
+}
 
 /// The struct that represents a chapter in this app. A chapter may be a chapter in a book, tutorial
 /// etc. A chapter can have 1 or more topics. The topic is a concept to master.
@@ -19,6 +44,7 @@ pub struct Chapter {
 #[derive(Debug, PartialEq, Deserialize, Derivative)]
 pub struct Config {
     pub language: String,
+    pub project: String,
     pub chapters: Vec<Chapter>,
 
     #[derivative(Default(value = "false"))]
@@ -28,6 +54,9 @@ pub struct Config {
     #[derivative(Default(value = "String::from(\".\")"))]
     #[serde(skip_deserializing)]
     pub root_dir: String,
+
+    #[serde(skip_deserializing)]
+    pub report_type: ReportType,
 }
 
 /// Implementation of the Config struct.
@@ -49,6 +78,17 @@ impl Config {
         Ok(config)
     }
 
+    pub fn from_path(project_path: &str) -> Result<Config, Box<dyn Error>> {
+        let project_path = project_path.to_string();
+        let config_path = format!("{}/challenges.yaml", project_path);
+
+        let config_file = std::fs::read_to_string(config_path)?;
+        let mut config: Config = serde_yaml::from_str(&config_file)?;
+
+        config.root_dir = project_path;
+        Ok(config)
+    }
+
     /// Make read and make the Config, this time with the default filename - `challenges.yaml`.
     /// This is the most common use case.
     pub fn new() -> Result<Config, Box<dyn Error>> {
@@ -60,8 +100,8 @@ impl Config {
     /// # Returns
     ///
     /// * `Set<String>` - The set of directories corresponding to the challenges.
-    pub fn computed_chapter_dirs(&self) -> std::collections::HashSet<String> {
-        let mut dirs = std::collections::HashSet::new();
+    pub fn computed_chapter_dirs(&self) -> HashSet<String> {
+        let mut dirs = HashSet::new();
         for chapter in &self.chapters {
             let dir_name = format!("{:02}.{}", chapter.number, chapter.name);
             dirs.insert(dir_name);
@@ -70,8 +110,8 @@ impl Config {
     }
 }
 
+#[allow(unused_imports)]
 mod tests {
-    use std::collections::HashSet;
 
     use super::*;
 
@@ -89,10 +129,12 @@ mod tests {
             topics: None,
         };
         let config = Config {
+            project: "Rust Language".to_string(),
             language: "rust".to_string(),
             chapters: vec![basics, loops],
             dirs_cached: false,
             root_dir: ".".to_string(),
+            report_type: ReportType::CLI,
         };
 
         let actual = Config::from_file("tests/challenges/c1/basic.yaml").unwrap();
