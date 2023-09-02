@@ -10,6 +10,12 @@ use termion::{color, style};
 /// * `missing_dirs` - (HashSet<String>) The missing directories.
 /// * `extra_dirs`   - (HashSet<String>) The extra directories.
 pub fn folder_status_report(missing_dirs: HashSet<String>, extra_dirs: HashSet<String>) {
+    let mut missing_dirs: Vec<String> = missing_dirs.into_iter().collect();
+    let mut extra_dirs: Vec<String> = extra_dirs.into_iter().collect();
+
+    missing_dirs.sort();
+    extra_dirs.sort();
+
     if missing_dirs.is_empty() && extra_dirs.is_empty() {
         println!(
             "{}{}All good!{}",

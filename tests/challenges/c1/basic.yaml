@@ -1,9 +1,9 @@
 language: rust
 project: Rust Language
 chapters:
-  - 01:
-    number: 1
+  01:
     name: basics
-  - 02:
-    number: 2
+  02:
     name: loops
+  x1:
+    name: extras

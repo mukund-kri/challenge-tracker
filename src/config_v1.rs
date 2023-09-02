@@ -1,61 +1,39 @@
-use std::collections::{HashMap, HashSet};
-
+/// A copy of v1 version of Configuration structs. Its only purpose now is for the transformer
+/// program to migrate from v1 to v2
+///
 use derivative::Derivative;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 /// All code related to reading the `challenges.yaml` configuration file.
-use std::error::Error;
+use std::{collections::HashMap, error::Error};
 
-/// Enum that controls the output of the analytics.
-#[derive(Debug, PartialEq)]
-pub enum ReportType {
-    /// Output the analytics in org-mode format.
-    OrgMode,
-    CLI,
-}
-
-impl Default for ReportType {
-    fn default() -> Self {
-        ReportType::CLI
-    }
-}
-
-impl ReportType {
-    pub fn new(type_str: &str) -> Self {
-        match type_str {
-            "org" => ReportType::OrgMode,
-            _ => ReportType::CLI,
-        }
-    }
-}
+use crate::config::{Chapter as ChapterV2, Config as ConfigV2};
 
 /// The struct that represents a chapter in this app. A chapter may be a chapter in a book, tutorial
 /// etc. A chapter can have 1 or more topics. The topic is a concept to master.
 /// On the filesystem, a chapter is a directory the same name as the chapter name with the
 /// index prepended to it. For example, the chapter `basics` with index `1` will be `01.basics`.
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 pub struct Chapter {
+    pub number: i32,
     pub name: String,
     pub topics: Option<Vec<String>>,
 }
 
 /// Configuration for the app. This is read (typically) from the `challenges.yaml` file in the
 /// root folder of the project.
-#[derive(Debug, PartialEq, Deserialize, Derivative, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Derivative)]
 pub struct Config {
     pub language: String,
     pub project: String,
-    pub chapters: HashMap<String, Chapter>,
+    pub chapters: Vec<Chapter>,
 
     #[derivative(Default(value = "false"))]
-    #[serde(skip_deserializing, skip_serializing)]
+    #[serde(skip_deserializing)]
     pub dirs_cached: bool,
 
     #[derivative(Default(value = "String::from(\".\")"))]
-    #[serde(skip_deserializing, skip_serializing)]
+    #[serde(skip_deserializing)]
     pub root_dir: String,
-
-    #[serde(skip_deserializing, skip_serializing)]
-    pub report_type: ReportType,
 }
 
 /// Implementation of the Config struct.
@@ -94,23 +72,33 @@ impl Config {
         Config::from_file("challenges.yaml")
     }
 
-    /// Construct the desired directory structure for the challenges.
-    ///
-    /// # Returns
-    ///
-    /// * `Set<String>` - The set of directories corresponding to the challenges.
-    pub fn computed_chapter_dirs(&self) -> HashSet<String> {
-        let mut dirs = HashSet::new();
-        for (index, chapter) in self.chapters.iter() {
-            let dir_name = format!("{}.{}", index, chapter.name);
-            dirs.insert(dir_name);
+    /// Conversion to v2
+    pub fn to_v2(&self) -> ConfigV2 {
+        let mut chapters = HashMap::new();
+        for chapter in &self.chapters {
+            let new_chapter = ChapterV2 {
+                name: chapter.name.clone(),
+                topics: chapter.topics.clone(),
+            };
+            let index = format!("{:02}", chapter.number);
+            chapters.insert(index, new_chapter);
         }
-        dirs
+
+        ConfigV2 {
+            language: self.language.clone(),
+            project: self.project.clone(),
+            chapters,
+            dirs_cached: self.dirs_cached,
+            root_dir: self.root_dir.clone(),
+            report_type: crate::config::ReportType::CLI,
+        }
     }
 }
 
 #[allow(unused_imports)]
 mod tests {
+
+    use std::vec;
 
     use super::*;
 
@@ -118,33 +106,24 @@ mod tests {
     #[test]
     fn test_read_config() {
         let basics = Chapter {
+            number: 1,
             name: "basics".to_string(),
             topics: None,
         };
         let loops = Chapter {
+            number: 2,
             name: "loops".to_string(),
             topics: None,
         };
         let config = Config {
             project: "Rust Language".to_string(),
             language: "rust".to_string(),
-            chapters: HashMap::from([("01".to_string(), basics), ("02".to_string(), loops)]),
+            chapters: vec![basics, loops],
             dirs_cached: false,
             root_dir: ".".to_string(),
-            report_type: ReportType::CLI,
         };
 
-        let actual = Config::from_file("tests/challenges/c1/basic.yaml").unwrap();
+        let actual = Config::from_file("tests/challenges/c1/challenges_v1.yaml").unwrap();
         assert_eq!(config, actual);
-    }
-
-    // Check if correct directories are computed from the config.
-    #[test]
-    fn test_computed_chapter_dirs() {
-        let dirs = HashSet::from(["01.basics".to_string(), "02.loops".to_string()]);
-        let config = Config::from_file("tests/challenges/c1/basic.yaml").unwrap();
-        let actual = config.computed_chapter_dirs();
-
-        assert_eq!(dirs, actual);
     }
 }
