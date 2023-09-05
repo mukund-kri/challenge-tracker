@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
@@ -44,7 +44,7 @@ pub struct Chapter {
 pub struct Config {
     pub language: String,
     pub project: String,
-    pub chapters: HashMap<String, Chapter>,
+    pub chapters: BTreeMap<String, Chapter>,
 
     #[derivative(Default(value = "false"))]
     #[serde(skip_deserializing, skip_serializing)]
@@ -128,7 +128,7 @@ mod tests {
         let config = Config {
             project: "Rust Language".to_string(),
             language: "rust".to_string(),
-            chapters: HashMap::from([("01".to_string(), basics), ("02".to_string(), loops)]),
+            chapters: BTreeMap::from([("01".to_string(), basics), ("02".to_string(), loops)]),
             dirs_cached: false,
             root_dir: ".".to_string(),
             report_type: ReportType::CLI,

@@ -3,7 +3,7 @@
 ## Description
 
 A small utility to check the progress of my coding challenges. It's not very
-useful for anyone else, but I'm putting it here in case someone wants to explore a 
+useful for anyone else, but I'm putting it out there in case someone wants to explore a 
 cli utility written in Rust.
 
 ## Usage
@@ -23,7 +23,8 @@ cargo install --path .
 
 ```bash
 
-cargo install --git https://gitlab.com/robert-abela/challenge-checker.git --branch main
+
+cargo install --git https://github.com/mukund-kri/challenge-tracker --branch main
 ```
 
 ## License

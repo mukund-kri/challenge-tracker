@@ -4,7 +4,7 @@
 use derivative::Derivative;
 use serde::Deserialize;
 /// All code related to reading the `challenges.yaml` configuration file.
-use std::{collections::HashMap, error::Error};
+use std::{collections::BTreeMap, error::Error};
 
 use crate::config::{Chapter as ChapterV2, Config as ConfigV2};
 
@@ -74,7 +74,7 @@ impl Config {
 
     /// Conversion to v2
     pub fn to_v2(&self) -> ConfigV2 {
-        let mut chapters = HashMap::new();
+        let mut chapters = BTreeMap::new();
         for chapter in &self.chapters {
             let new_chapter = ChapterV2 {
                 name: chapter.name.clone(),
